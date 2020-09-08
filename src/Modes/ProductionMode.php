@@ -8,6 +8,7 @@ use App\Templates\Site\SiteTemplate;
 
 class ProductionMode implements ExceptionHandlerModeInterface
 {
+
     protected string $rootDir;
 
     public function __construct(string $rootDir)
@@ -32,7 +33,7 @@ class ProductionMode implements ExceptionHandlerModeInterface
      * Huge Mess
      * FIX IT
      */
-    private function showErrorTemplate(\Throwable $exception)
+    private function showErrorTemplate(\Throwable $exception):void
     {
         $acceptable = \explode(',', $_SERVER['HTTP_ACCEPT'] ?? 'text/html');
 
@@ -40,18 +41,26 @@ class ProductionMode implements ExceptionHandlerModeInterface
             // We can show error page as HTML
             $fountain = new \Falgun\Fountain\Fountain(new \Falgun\Fountain\SharedServices());
 
+            $session = new \Falgun\Http\Session();
+            $session->start();
+            $request = \Falgun\Http\Request::createFromGlobals();
+            $fountain->set(\Falgun\Http\Request::class, $request);
+
             /* @var $template SiteTemplate */
             $template = $fountain->get(SiteTemplate::class);
 
             $template->view(strval($exception->getCode() ?: 500));
             $template->setStatusCode($exception->getCode() ?: 500);
-            $template->setViewDirFromControllerPath('ErrorsController', $this->rootDir . '/src/Views');
+            $template->setViewDirFromControllerPath('\\Controllers\\ErrorsController', $this->rootDir . '/src/Views');
 
-            return $template->send();
+            $responseEmitter = new \Falgun\Application\ResponseEmitter();
+            $responseEmitter->emit($request, $template);
+            exit;
         }
         // We are gonna force Json here
         \header('Content-Type: application/json');
         echo \json_encode(['error_no' => ($exception->getCode() ?: 500),
             'error_msg' => 'oops! something went wrong!']);
+        exit;
     }
 }
