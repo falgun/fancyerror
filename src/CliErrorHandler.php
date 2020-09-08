@@ -15,14 +15,6 @@ class CliErrorHandler
         set_exception_handler(array($this, 'exceptionHandler'));
     }
 
-    /**
-     * 
-     * @param type $level
-     * @param type $message
-     * @param type $file
-     * @param type $line
-     * @throws ErrorException
-     */
     public function errorHandler($level, $message, $file, $line)
     {
         throw new ErrorException($message, 0, $level, $file, $line);
@@ -33,7 +25,7 @@ class CliErrorHandler
      * Handle any errors
      * @param Exception $exception
      */
-    public function exceptionHandler($exception)
+    public function exceptionHandler(\Throwable $exception)
     {
         /**
          * @todo Replace with template like <blue>text</blue>

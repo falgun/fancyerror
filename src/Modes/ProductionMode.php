@@ -10,7 +10,7 @@ class ProductionMode implements ExceptionHandlerModeInterface
 {
     protected string $rootDir;
 
-    public function __construct($rootDir)
+    public function __construct(string $rootDir)
     {
         $this->rootDir = $rootDir;
     }
@@ -32,16 +32,16 @@ class ProductionMode implements ExceptionHandlerModeInterface
      * Huge Mess
      * FIX IT
      */
-    private function showErrorTemplate($exception)
+    private function showErrorTemplate(\Throwable $exception)
     {
         $acceptable = \explode(',', $_SERVER['HTTP_ACCEPT'] ?? 'text/html');
 
         if (\in_array('text/html', $acceptable, true) && class_exists(SiteTemplate::class)) {
             // We can show error page as HTML
             $fountain = new \Falgun\Fountain\Fountain(new \Falgun\Fountain\SharedServices());
-            
+
             /* @var $template SiteTemplate */
-            $template = $fountain->resolve(SiteTemplate::class);
+            $template = $fountain->get(SiteTemplate::class);
 
             $template->view(strval($exception->getCode() ?: 500));
             $template->setStatusCode($exception->getCode() ?: 500);

@@ -19,7 +19,7 @@ class DebugMode implements ExceptionHandlerModeInterface
 
     protected string $rootDir;
 
-    public function __construct($rootDir)
+    public function __construct(string $rootDir)
     {
         $this->rootDir = $rootDir;
     }
