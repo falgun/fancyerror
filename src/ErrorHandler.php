@@ -5,20 +5,24 @@ namespace Falgun\FancyError;
 
 use Throwable;
 use ErrorException;
+use Falgun\Fountain\Fountain;
 use Falgun\Application\Config;
 use Falgun\FancyError\Modes\DebugMode;
 use Falgun\FancyError\Modes\ProductionMode;
+use Falgun\FancyError\Modes\ExceptionHandlerModeInterface;
 
 final class ErrorHandler
 {
 
     protected bool $isDebug;
     protected string $rootDir;
+    protected ExceptionHandlerModeInterface $handler;
 
     private function __construct(bool $isDebug, string $rootDir)
     {
         $this->isDebug = $isDebug;
         $this->rootDir = $rootDir;
+        $this->handler = $this->buildHandler();
 
         \set_error_handler([$this, 'errorHandler']);
         \set_exception_handler([$this, 'exceptionHandler']);
@@ -39,12 +43,20 @@ final class ErrorHandler
 
     public function exceptionHandler(Throwable $exception): void
     {
+        $this->handler->handle($exception);
+    }
+
+    public function applicationBooted(Fountain $container): void
+    {
+        $this->handler->enterApplicationMode($container);
+    }
+
+    private function buildHandler(): ExceptionHandlerModeInterface
+    {
         if ($this->isDebug === true) {
-            $handler = new DebugMode($this->rootDir);
-        } else {
-            $handler = new ProductionMode($this->rootDir);
+            return new DebugMode($this->rootDir);
         }
 
-        $handler->handle($exception);
+        return new ProductionMode($this->rootDir);
     }
 }

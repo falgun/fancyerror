@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Falgun\FancyError\Modes;
 
 use Throwable;
+use Falgun\Fountain\Fountain;
 use Falgun\FancyError\Mappers\CodebaseToHTML;
 use Falgun\FancyError\Mappers\ExceptionTraceToHTML;
 
@@ -92,5 +93,10 @@ class DebugMode implements ExceptionHandlerModeInterface
     private function getResponseCodeFromException(Throwable $exception): int
     {
         return $exception->getCode() ?: 404;
+    }
+
+    public function enterApplicationMode(Fountain $container): void
+    {
+        return;
     }
 }
