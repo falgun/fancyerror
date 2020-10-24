@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Falgun\FancyError\Modes;
 
 use Throwable;
+use ErrorException;
 use Falgun\Fountain\Fountain;
 use Falgun\FancyError\Mappers\CodebaseToHTML;
 use Falgun\FancyError\Mappers\ExceptionTraceToHTML;
@@ -25,7 +26,6 @@ class DebugMode implements ExceptionHandlerModeInterface
         $this->rootDir = $rootDir;
     }
 
-    //put your code here
     public function handle(Throwable $exception): void
     {
         \http_response_code($this->getResponseCodeFromException($exception));
@@ -35,7 +35,10 @@ class DebugMode implements ExceptionHandlerModeInterface
         $template = $this->loadTemplateFile();
 
         echo $this->populateTemplateWithErrorData($template, $errorPack);
-        die;
+
+        if (\defined('PHPUNIT_RUNNING') === false) {
+            die;
+        }
     }
 
     private function prepareErrorPack(Throwable $exception): array
@@ -58,8 +61,9 @@ class DebugMode implements ExceptionHandlerModeInterface
             $errorPack['error_type'] = $this->errorType($exception->getSeverity());
         } else {
             $errorPack['reporter'] = 'Framework Internal';
-            $errorPack['error_type'] = $this->errorType($exception->getCode());
+            $errorPack['error_type'] = $this->errorType((int) $exception->getCode());
         }
+
         return $errorPack;
     }
 
@@ -81,7 +85,7 @@ class DebugMode implements ExceptionHandlerModeInterface
         return $template;
     }
 
-    private function errorType($errorCode)
+    private function errorType(int $errorCode): string
     {
         if (isset(self::ERROR_TYPES[$errorCode])) {
             return \str_replace('_', ' ', self::ERROR_TYPES[$errorCode]);
@@ -92,7 +96,7 @@ class DebugMode implements ExceptionHandlerModeInterface
 
     private function getResponseCodeFromException(Throwable $exception): int
     {
-        return $exception->getCode() ?: 404;
+        return (int) $exception->getCode() ?: 404;
     }
 
     public function enterApplicationMode(Fountain $container): void

@@ -6,34 +6,26 @@ namespace Falgun\FancyError;
 use Throwable;
 use ErrorException;
 use Falgun\Fountain\Fountain;
-use Falgun\Application\Config;
-use Falgun\FancyError\Modes\DebugMode;
-use Falgun\FancyError\Modes\ProductionMode;
 use Falgun\FancyError\Modes\ExceptionHandlerModeInterface;
+use function set_error_handler;
+use function set_exception_handler;
 
 final class ErrorHandler
 {
 
-    protected bool $isDebug;
-    protected string $rootDir;
-    protected ExceptionHandlerModeInterface $handler;
+    private ExceptionHandlerModeInterface $handler;
 
-    private function __construct(bool $isDebug, string $rootDir)
+    public function __construct(ExceptionHandlerModeInterface $handler)
     {
-        $this->isDebug = $isDebug;
-        $this->rootDir = $rootDir;
-        $this->handler = $this->buildHandler();
+        $this->handler = $handler;
 
-        \set_error_handler([$this, 'errorHandler']);
-        \set_exception_handler([$this, 'exceptionHandler']);
-    }
+        set_error_handler(function(int $level, string $message, string $file, int $line) {
+            $this->errorHandler($level, $message, $file, $line);
+        });
 
-    public static function createFromConfig(Config $config, string $rootDir): ErrorHandler
-    {
-        return (new ErrorHandler(
-                $config->get('DEBUG'),
-                $rootDir,
-        ));
+        set_exception_handler(function(Throwable $exception) {
+            $this->exceptionHandler($exception);
+        });
     }
 
     public function errorHandler(int $level, string $message, string $file, int $line): void
@@ -49,14 +41,5 @@ final class ErrorHandler
     public function applicationBooted(Fountain $container): void
     {
         $this->handler->enterApplicationMode($container);
-    }
-
-    private function buildHandler(): ExceptionHandlerModeInterface
-    {
-        if ($this->isDebug === true) {
-            return new DebugMode($this->rootDir);
-        }
-
-        return new ProductionMode($this->rootDir);
     }
 }

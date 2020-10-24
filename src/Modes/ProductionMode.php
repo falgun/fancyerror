@@ -5,17 +5,24 @@ namespace Falgun\FancyError\Modes;
 
 use Falgun\Fountain\Fountain;
 use Falgun\FancyError\ErrorLogger;
-use App\Templates\Site\SiteTemplate;
 
-class ProductionMode implements ExceptionHandlerModeInterface
+final class ProductionMode implements ExceptionHandlerModeInterface
 {
 
-    protected string $rootDir;
-    private Fountain $container;
+    private string $appDir;
+    private string $logDir;
+    private ?Fountain $container;
 
-    public function __construct(string $rootDir)
+    public function __construct(string $appDir, string $logDir)
     {
-        $this->rootDir = $rootDir;
+        $this->appDir = $appDir;
+        $this->logDir = $logDir;
+        $this->container = null;
+    }
+
+    public function enterApplicationMode(Fountain $container): void
+    {
+        $this->container = $container;
     }
 
     public function handle(\Throwable $exception): void
@@ -26,13 +33,13 @@ class ProductionMode implements ExceptionHandlerModeInterface
         } catch (\Throwable $exception) {
             \http_response_code(500);
         } finally {
-            die;
+            $this->terminate();
         }
     }
 
     private function writeToLog(\Throwable $exception): void
     {
-        $errorLogger = new ErrorLogger($this->rootDir . DS . 'var' . DS . 'errors');
+        $errorLogger = new ErrorLogger($this->logDir);
         $errorLogger->logException($exception);
     }
 
@@ -56,37 +63,40 @@ class ProductionMode implements ExceptionHandlerModeInterface
      */
     private function showErrorTemplate(\Throwable $exception): void
     {
+        if (isset($this->container) === false) {
+            return;
+        }
+
         $acceptable = \explode(',', $_SERVER['HTTP_ACCEPT'] ?? 'text/html');
 
-        if (\in_array('text/html', $acceptable, true) && class_exists(SiteTemplate::class)) {
+        if (\in_array('text/html', $acceptable, true) && class_exists(\App\Templates\Site\SiteTemplate::class)) {
             // We can show error page as HTML
-
-            // Template may require session
-            $_SESSION = [];
             $request = $this->container->get(\Falgun\Http\Request::class);
 
-            /* @var $template SiteTemplate */
-            $template = $this->container->get(SiteTemplate::class);
+            /* @var $response SiteTemplate */
+            $response = $this->container->get(\App\Templates\Site\SiteTemplate::class);
 
-            $template->view(strval($exception->getCode() ?: 500));
-            $template->setStatusCode($exception->getCode() ?: 500);
-            $template->setViewDirFromControllerPath('\\Controllers\\ErrorsController', $this->rootDir . '/src/Views');
-
-            $responseEmitter = new \Falgun\Application\ResponseEmitter();
-            $responseEmitter->emit($request, $template);
-            exit;
+            $response->view(strval($exception->getCode() ?: 500));
+            $response->setStatusCode($exception->getCode() ?: 500);
+            $response->setViewDirFromControllerPath('\\Controllers\\ErrorsController', $this->appDir . '/Views');
+        } else {
+            // We are gonna force Json here
+            $response = new \Falgun\Http\Response(
+                \json_encode(['oops! something went wrong!']),
+                ($exception->getCode() ?: 500),
+                'Internal Server Error'
+            );
+            $response->headers()->set('Content-Type', 'application/json');
         }
-        // We are gonna force Json here
-        \header('Content-Type: application/json');
-        echo \json_encode([
-            'error_no' => ($exception->getCode() ?: 500),
-            'error_msg' => 'oops! something went wrong!'
-        ]);
-        exit;
+
+        $responseEmitter = new \Falgun\Application\ResponseEmitter();
+        $responseEmitter->emit($request, $response);
     }
 
-    public function enterApplicationMode(Fountain $container): void
+    private function terminate(): void
     {
-        $this->container = $container;
+        if (\defined('PHPUNIT_RUNNING') === false) {
+            die;
+        }
     }
 }

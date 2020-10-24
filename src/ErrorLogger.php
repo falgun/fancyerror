@@ -19,16 +19,16 @@ class ErrorLogger
         }
     }
 
-    public function logException(\Throwable $exception)
+    public function logException(\Throwable $exception): bool
     {
         $errorText = \date('Y-m-d H:i:s') . ' # ' . $exception->getMessage() . ' Thrown in ' . $exception->getFile() . ' on line ' . $exception->getLine() . \PHP_EOL;
         return $this->log($errorText);
     }
 
-    public function log(string $errorMsg, string $fileName = 'error_log')
+    public function log(string $errorMsg, string $fileName = 'error_log'): bool
     {
-        $errorFile = $this->logDIR . DS . $fileName;
+        $errorFile = $this->logDIR . DIRECTORY_SEPARATOR . $fileName;
 
-        return \file_put_contents($errorFile, $errorMsg, \FILE_APPEND);
+        return \file_put_contents($errorFile, $errorMsg, \FILE_APPEND) !== false;
     }
 }
