@@ -7,10 +7,10 @@ use ErrorException;
 use function set_error_handler;
 use function set_exception_handler;
 
-class CliErrorHandler
+final class CliErrorHandler
 {
 
-    protected string $rootDir;
+    private string $rootDir;
 
     public function __construct(string $rootDir)
     {

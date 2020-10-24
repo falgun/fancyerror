@@ -59,7 +59,8 @@ final class ProductionMode implements ExceptionHandlerModeInterface
 
     /**
      * Huge Mess
-     * FIX IT
+     * Sorry, I've failed to make this code any better
+     * please FIX IT if you can
      */
     private function showErrorTemplate(\Throwable $exception): void
     {
@@ -67,11 +68,12 @@ final class ProductionMode implements ExceptionHandlerModeInterface
             return;
         }
 
-        $acceptable = \explode(',', $_SERVER['HTTP_ACCEPT'] ?? 'text/html');
+        $request = $this->container->get(\Falgun\Http\Request::class);
 
-        if (\in_array('text/html', $acceptable, true) && class_exists(\App\Templates\Site\SiteTemplate::class)) {
+        $acceptHeader = strtolower($request->headers()->get('Accept', 'text/html'));
+
+        if ((\strpos($acceptHeader, 'text/html') !== false) && class_exists(\App\Templates\Site\SiteTemplate::class)) {
             // We can show error page as HTML
-            $request = $this->container->get(\Falgun\Http\Request::class);
 
             /* @var $response SiteTemplate */
             $response = $this->container->get(\App\Templates\Site\SiteTemplate::class);
@@ -79,10 +81,20 @@ final class ProductionMode implements ExceptionHandlerModeInterface
             $response->view(strval($exception->getCode() ?: 500));
             $response->setStatusCode($exception->getCode() ?: 500);
             $response->setViewDirFromControllerPath('\\Controllers\\ErrorsController', $this->appDir . '/Views');
+
+            $response->with(['exception', $exception]);
         } else {
+            $output = [
+                'success' => false,
+                'error' => [
+                    'code' => ($exception->getCode() ?: 500),
+                    'message' => 'Sorry, something went wrong!',
+                    'reason' => 'Internal Server Error',
+                ],
+            ];
             // We are gonna force Json here
             $response = new \Falgun\Http\Response(
-                \json_encode(['oops! something went wrong!']),
+                \json_encode($output),
                 ($exception->getCode() ?: 500),
                 'Internal Server Error'
             );

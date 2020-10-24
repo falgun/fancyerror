@@ -41,7 +41,6 @@
                 <h2><font color="green">#ERROR#</font></h2>
                 <p> Thrown in <b>#FILE#</b> on line <font color="red"><b>#LINE#</b></font></p>
                 <p><pre>#CODEBASE#</pre></p>
-                <p>Type : #ERROR_TYPE#</p>
                 <p>Thrown by: #REPORTER#</p>
 
                 <p>Stack Trace : <pre>#STACKTRACE#</pre></p>

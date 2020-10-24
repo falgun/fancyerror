@@ -3,15 +3,13 @@ declare(strict_types=1);
 
 namespace Falgun\FancyError;
 
-class ErrorLogger
+final class ErrorLogger
 {
 
-    protected string $logDIR;
+    private string $logDIR;
 
     public function __construct(string $logDIR)
     {
-        //ROOT_DIR . DS . 'var' . DS . 'errors'
-
         $this->logDIR = \rtrim($logDIR, '/');
 
         if (\is_dir($this->logDIR) === false) {

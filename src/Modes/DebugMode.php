@@ -9,17 +9,9 @@ use Falgun\Fountain\Fountain;
 use Falgun\FancyError\Mappers\CodebaseToHTML;
 use Falgun\FancyError\Mappers\ExceptionTraceToHTML;
 
-class DebugMode implements ExceptionHandlerModeInterface
+final class DebugMode implements ExceptionHandlerModeInterface
 {
-
-    private const ERROR_TYPES = [
-        E_ERROR => 'FATAL_ERROR',
-        E_WARNING => 'ERROR_WARNING',
-        E_PARSE => 'ERROR_PARSE',
-        E_NOTICE => 'ERROR_NOTICE'
-    ];
-
-    protected string $rootDir;
+    private string $rootDir;
 
     public function __construct(string $rootDir)
     {
@@ -58,10 +50,8 @@ class DebugMode implements ExceptionHandlerModeInterface
 
         if ($exception instanceof ErrorException) {
             $errorPack['reporter'] = 'PHP Parser';
-            $errorPack['error_type'] = $this->errorType($exception->getSeverity());
         } else {
             $errorPack['reporter'] = 'Framework Internal';
-            $errorPack['error_type'] = $this->errorType((int) $exception->getCode());
         }
 
         return $errorPack;
@@ -83,15 +73,6 @@ class DebugMode implements ExceptionHandlerModeInterface
             $template = \str_replace('#' . \strtoupper($name) . '#', $data, $template);
         }
         return $template;
-    }
-
-    private function errorType(int $errorCode): string
-    {
-        if (isset(self::ERROR_TYPES[$errorCode])) {
-            return \str_replace('_', ' ', self::ERROR_TYPES[$errorCode]);
-        }
-
-        return 'FATAL ERROR';
     }
 
     private function getResponseCodeFromException(Throwable $exception): int
