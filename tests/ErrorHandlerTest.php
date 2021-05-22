@@ -32,7 +32,6 @@ final class ErrorHandlerTest extends TestCase
         $this->assertStringContainsString('<h2><font color="green">Boom!! Error Happened</font></h2>', $output);
         $this->assertStringContainsString('<p> Thrown in <b>/home/ataur/server/falgun/fancyerror/tests/ErrorHandlerTest.php</b>', $output);
         $this->assertStringContainsString('on line <font color="red"><b>29</b></font></p>', $output);
-        $this->assertStringContainsString('<p>Type : FATAL ERROR</p>', $output);
         $this->assertStringContainsString('<p>Thrown by: Framework Internal</p>', $output);
     }
 

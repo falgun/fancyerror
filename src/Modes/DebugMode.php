@@ -70,14 +70,16 @@ final class DebugMode implements ExceptionHandlerModeInterface
     private function populateTemplateWithErrorData(string $template, array $errorData): string
     {
         foreach ($errorData as $name => $data) {
-            $template = \str_replace('#' . \strtoupper($name) . '#', $data, $template);
+            $template = \str_replace('#' . \strtoupper($name) . '#', (string) $data, $template);
         }
         return $template;
     }
 
     private function getResponseCodeFromException(Throwable $exception): int
     {
-        return (int) $exception->getCode() ?: 404;
+        $code = $exception->getCode();
+
+        return is_int($code) && $code >= 100 ? $code : 500;
     }
 
     public function enterApplicationMode(Fountain $container): void

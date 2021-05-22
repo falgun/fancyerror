@@ -23,15 +23,15 @@
         }
     },
     "require": {
-        "php": "^7.4",
+        "php": "^7.4|^8.0",
         "falgunphp/application": "dev-master",
         "falgunphp/fountain": "dev-master",
-        "falgunphp/http": "^0.0.3"
+        "falgunphp/http": "^0.0.4"
     },
     "require-dev": {
-        "phpunit/phpunit": "^9.4",
-        "sempro/phpunit-pretty-print": "^1.3",
-        "vimeo/psalm": "^4.0"
+        "phpunit/phpunit": "^9.5",
+        "sempro/phpunit-pretty-print": "^1.4",
+        "vimeo/psalm": "^4.7"
     },
     "scripts": {
         "phpunit": "phpunit --verbose --colors=always"
